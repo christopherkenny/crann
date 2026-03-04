@@ -1,0 +1,21 @@
+Package: crann
+Title: Spanning Tree Methods for Graphs
+Version: 0.0.0.9000
+Authors@R:
+    person(given = "Christopher T.",
+       family = "Kenny",
+       role = c("aut", "cre"),
+       email = "ctkenny@proton.me",
+       comment = c(ORCID = "0000-0002-9386-6860"))
+Description: Implements spanning tree algorithms for undirected graphs
+    represented as 'adj' adjacency lists. Currently provides enumeration of
+    all spanning trees using the contraction-based algorithm of Winter (1986)
+    <doi:10.1007/BF01939361>.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Imports:
+    adj,
+    cli
+Config/testthat/edition: 3
