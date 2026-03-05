@@ -6,10 +6,10 @@
 #include <R_ext/Rdynload.h>
 #include <R_ext/Visibility.h>
 
-extern SEXP enumerate_spanning_trees_c(SEXP graph_R);
+extern SEXP enumerate_spanning_trees_c(SEXP graph_R, SEXP count_R);
 
 static const R_CallMethodDef CallEntries[] = {
-    {"enumerate_spanning_trees_c", (DL_FUNC) &enumerate_spanning_trees_c, 1},
+    {"enumerate_spanning_trees_c", (DL_FUNC) &enumerate_spanning_trees_c, 2},
     {NULL, NULL, 0}
 };
 

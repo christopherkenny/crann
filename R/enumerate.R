@@ -29,5 +29,6 @@ enumerate_spanning_trees <- function(graph) {
     cli::cli_abort('{.arg graph} must have at least 2 vertices.')
   }
 
-  .Call(enumerate_spanning_trees_c, graph)
+  count <- count_spanning_trees(graph)
+  .Call(enumerate_spanning_trees_c, graph, count)
 }
