@@ -7,9 +7,11 @@
 #include <R_ext/Visibility.h>
 
 extern SEXP enumerate_spanning_trees_c(SEXP graph_R, SEXP count_R);
+extern SEXP enumerate_spanning_trees_matrix_c(SEXP graph_R, SEXP count_R);
 
 static const R_CallMethodDef CallEntries[] = {
-    {"enumerate_spanning_trees_c", (DL_FUNC) &enumerate_spanning_trees_c, 2},
+    {"enumerate_spanning_trees_c",        (DL_FUNC) &enumerate_spanning_trees_c,        2},
+    {"enumerate_spanning_trees_matrix_c", (DL_FUNC) &enumerate_spanning_trees_matrix_c, 2},
     {NULL, NULL, 0}
 };
 

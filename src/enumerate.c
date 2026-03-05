@@ -25,9 +25,10 @@ typedef struct {
     UndoEntry *undo;
     int undo_top;
     /* Output */
-    SEXP result;     /* pre-allocated VECSXP(total_trees) */
+    SEXP result;     /* pre-allocated VECSXP(total_trees) or R_NilValue */
+    int *mat_data;   /* (n-1) * 2 * total_trees int array (column-major) or NULL */
     int n_trees;
-    /* Shared objects for adj construction (allocated once) */
+    /* Shared objects for adj construction (allocated once; unused if mat_data != NULL) */
     SEXP cls, dup_str, loop_str;
     SEXP dup_sym, loop_sym;
     /* Reusable scratch buffers for adj construction */
@@ -72,13 +73,32 @@ static SEXP build_tree_adj(EnumState *s) {
     return tree;
 }
 
+/* Write one spanning tree into the matrix output (column-major).
+ * Tree t occupies columns 2t and 2t+1 (0-indexed), each of length n-1.
+ * Column 2t: u endpoints; column 2t+1: v endpoints. */
+static void build_tree_matrix(EnumState *s) {
+    int n1 = s->n - 1;
+    int t  = s->n_trees;
+    int *d = s->mat_data + 2 * t * n1;
+    for (int k = 0; k < n1; k++) {
+        int e    = s->selected[k] - 1;
+        d[k]      = s->orig_edges[e * 2 + 0] + 1; /* u, 1-indexed */
+        d[n1 + k] = s->orig_edges[e * 2 + 1] + 1; /* v, 1-indexed */
+    }
+}
+
 /* Recursively expand the Cartesian product of the edge sets chosen so far.
  * At each level, the edge set is E[tri(n-level, chosen[level])]. */
 static void expand_product(EnumState *s, int level) {
     int n1 = s->n - 1;
     if (level == n1) {
-        SEXP tree = build_tree_adj(s);
-        SET_VECTOR_ELT(s->result, s->n_trees++, tree);
+        if (s->mat_data) {
+            build_tree_matrix(s);
+        } else {
+            SEXP tree = build_tree_adj(s);
+            SET_VECTOR_ELT(s->result, s->n_trees, tree);
+        }
+        s->n_trees++;
         return;
     }
     int nk   = s->n - level;
@@ -157,22 +177,9 @@ static void contract(EnumState *s, int k) {
     }
 }
 
-/* Main entry point.
- * graph_R: adj object (plain R list of integer vectors, 1-indexed neighbors).
- * count_R: expected number of spanning trees (numeric scalar from Kirchhoff). */
-SEXP enumerate_spanning_trees_c(SEXP graph_R, SEXP count_R) {
-    int n = Rf_length(graph_R);
-
-    if (n > 63) {
-        Rf_error(
-            "enumerate_spanning_trees: graphs with more than 63 vertices are "
-            "not supported (would require more spanning trees than can be stored)"
-        );
-    }
-
-    int total_trees = (int)Rf_asReal(count_R);
-    if (total_trees == 0) return Rf_allocVector(VECSXP, 0);
-
+/* Parse graph_R and initialize the algorithmic state in *s.
+ * All internal buffers are allocated via R_alloc (freed at .Call return). */
+static void init_enum_state(SEXP graph_R, int n, EnumState *s) {
     /* ---- Step 1: Proper labeling (BFS from max-degree vertex) ---- */
     int *deg          = (int *)R_alloc(n, sizeof(int));
     int *inv_label    = (int *)R_alloc(n, sizeof(int));
@@ -251,36 +258,58 @@ SEXP enumerate_spanning_trees_c(SEXP graph_R, SEXP count_R) {
     /* ---- Step 3: Initialize state ---- */
     int n_pairs = n * (n - 1) / 2;
 
-    EnumState s;
-    s.n          = n;
-    s.m          = m;
-    s.edges      = edges;
-    s.orig_edges = orig_edges;
+    s->n          = n;
+    s->m          = m;
+    s->edges      = edges;
+    s->orig_edges = orig_edges;
 
-    s.E_data  = (int *)R_alloc((size_t)n_pairs * (m + 1), sizeof(int));
-    s.E_len   = (int *)R_alloc(n_pairs, sizeof(int));
-    s.EE_bits = (uint64_t *)R_alloc(n + 1, sizeof(uint64_t));
-    s.chosen  = (int *)R_alloc(n, sizeof(int));
-    s.undo    = (UndoEntry *)R_alloc((size_t)(m + 1) * n, sizeof(UndoEntry));
-    s.selected  = (int *)R_alloc(n - 1, sizeof(int));
-    s.tmp_deg   = (int *)R_alloc(n, sizeof(int));
-    s.tmp_off   = (int *)R_alloc(n, sizeof(int));
+    s->E_data  = (int *)R_alloc((size_t)n_pairs * (m + 1), sizeof(int));
+    s->E_len   = (int *)R_alloc(n_pairs, sizeof(int));
+    s->EE_bits = (uint64_t *)R_alloc(n + 1, sizeof(uint64_t));
+    s->chosen  = (int *)R_alloc(n, sizeof(int));
+    s->undo    = (UndoEntry *)R_alloc((size_t)(m + 1) * n, sizeof(UndoEntry));
+    s->selected  = (int *)R_alloc(n - 1, sizeof(int));
+    s->tmp_deg   = (int *)R_alloc(n, sizeof(int));
+    s->tmp_off   = (int *)R_alloc(n, sizeof(int));
 
-    memset(s.E_data,  0, (size_t)n_pairs * (m + 1) * sizeof(int));
-    memset(s.E_len,   0, n_pairs * sizeof(int));
-    memset(s.EE_bits, 0, (n + 1) * sizeof(uint64_t));
+    memset(s->E_data,  0, (size_t)n_pairs * (m + 1) * sizeof(int));
+    memset(s->E_len,   0, n_pairs * sizeof(int));
+    memset(s->EE_bits, 0, (n + 1) * sizeof(uint64_t));
 
     for (int e = 0; e < m; e++) {
         int j = edges[e * 2 + 0], i = edges[e * 2 + 1];
         int p = tri(j, i);
-        s.E_data[p * (m + 1) + s.E_len[p]] = e + 1;
-        s.E_len[p]++;
+        s->E_data[p * (m + 1) + s->E_len[p]] = e + 1;
+        s->E_len[p]++;
     }
     for (int j = 2; j <= n; j++) {
         for (int i = 1; i < j; i++) {
-            if (s.E_len[tri(j, i)] > 0) s.EE_bits[j] |= (1ULL << i);
+            if (s->E_len[tri(j, i)] > 0) s->EE_bits[j] |= (1ULL << i);
         }
     }
+
+    s->n_trees  = 0;
+    s->undo_top = 0;
+}
+
+/* Main entry point — returns a list of adj objects, one per spanning tree.
+ * graph_R: adj object (plain R list of integer vectors, 1-indexed neighbors).
+ * count_R: expected number of spanning trees (numeric scalar from Kirchhoff). */
+SEXP enumerate_spanning_trees_c(SEXP graph_R, SEXP count_R) {
+    int n = Rf_length(graph_R);
+
+    if (n > 63) {
+        Rf_error(
+            "enumerate_spanning_trees: graphs with more than 63 vertices are "
+            "not supported (would require more spanning trees than can be stored)"
+        );
+    }
+
+    int total_trees = (int)Rf_asReal(count_R);
+    if (total_trees == 0) return Rf_allocVector(VECSXP, 0);
+
+    EnumState s;
+    init_enum_state(graph_R, n, &s);
 
     /* ---- Step 4: Shared adj attribute objects ---- */
     SEXP result   = PROTECT(Rf_allocVector(VECSXP, total_trees));
@@ -291,8 +320,7 @@ SEXP enumerate_spanning_trees_c(SEXP graph_R, SEXP count_R) {
     SET_STRING_ELT(cls, 1, Rf_mkChar("list"));
 
     s.result   = result;
-    s.n_trees  = 0;
-    s.undo_top = 0;
+    s.mat_data = NULL;
     s.cls      = cls;
     s.dup_str  = dup_str;
     s.loop_str = loop_str;
@@ -304,4 +332,39 @@ SEXP enumerate_spanning_trees_c(SEXP graph_R, SEXP count_R) {
 
     UNPROTECT(4); /* result, cls, dup_str, loop_str */
     return result;
+}
+
+/* Alternative entry point — returns an (n-1) x (2t) integer matrix.
+ * Columns 2k and 2k+1 (0-indexed) hold the u and v endpoints (1-indexed
+ * vertex IDs) of the n-1 edges of spanning tree k.  A single matrix
+ * allocation replaces the per-tree adj construction, greatly reducing
+ * R memory pressure for graphs with many spanning trees.
+ * graph_R: adj object.  count_R: number of spanning trees from Kirchhoff. */
+SEXP enumerate_spanning_trees_matrix_c(SEXP graph_R, SEXP count_R) {
+    int n = Rf_length(graph_R);
+
+    if (n > 63) {
+        Rf_error(
+            "enumerate_spanning_trees: graphs with more than 63 vertices are "
+            "not supported (would require more spanning trees than can be stored)"
+        );
+    }
+
+    int total_trees = (int)Rf_asReal(count_R);
+    int n1 = n - 1;
+    if (total_trees == 0) return Rf_allocMatrix(INTSXP, n1, 0);
+
+    EnumState s;
+    init_enum_state(graph_R, n, &s);
+
+    SEXP mat = PROTECT(Rf_allocMatrix(INTSXP, n1, 2 * total_trees));
+    s.mat_data = INTEGER(mat);
+    s.result   = R_NilValue;
+    s.cls = s.dup_str = s.loop_str = R_NilValue;
+    s.dup_sym = s.loop_sym = R_NilValue;
+
+    contract(&s, 0);
+
+    UNPROTECT(1);
+    return mat;
 }

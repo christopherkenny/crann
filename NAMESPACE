@@ -2,6 +2,7 @@
 
 export(count_spanning_trees)
 export(enumerate_spanning_trees)
+export(enumerate_spanning_trees_edges)
 export(fundamental_cuts)
 export(fundamental_cycles)
 export(is_spanning_tree)

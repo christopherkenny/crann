@@ -1,0 +1,29 @@
+url: http://christophertkenny.com/crann/
+template:
+  bootstrap: 5
+
+reference:
+  - title: Enumeration
+    desc: Count, enumerate, and sample spanning trees.
+    contents:
+      - count_spanning_trees
+      - enumerate_spanning_trees
+      - enumerate_spanning_trees_edges
+      - sample_spanning_tree
+
+  - title: Construction
+    desc: Build spanning trees optimizing for edge weight.
+    contents:
+      - minimum_spanning_tree
+
+  - title: Validation
+    desc: Check whether a graph is a spanning tree.
+    contents:
+      - is_spanning_tree
+      - is_spanning_tree_of
+
+  - title: Structure
+    desc: Compute fundamental cycles and cuts relative to a spanning tree.
+    contents:
+      - fundamental_cycles
+      - fundamental_cuts
