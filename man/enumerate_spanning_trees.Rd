@@ -25,7 +25,6 @@ trees.
 g <- adj::adj(list(c(2L, 3L), c(1L, 3L), c(1L, 2L)))
 trees <- enumerate_spanning_trees(g)
 length(trees)
-
 }
 \references{
 Winter, P. (1986). An algorithm for the enumeration of spanning

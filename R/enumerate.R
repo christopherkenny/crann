@@ -9,8 +9,8 @@
 #' @param graph An `adj` object representing a connected undirected graph
 #'   without self-loops or duplicate edges.
 #'
-#' @returns A list of `adj` objects, one per spanning tree.
-#'
+#' @return A list of `adj` objects, one per spanning tree.
+#' @export
 #' @references Winter, P. (1986). An algorithm for the enumeration of spanning
 #'   trees. *BIT Numerical Mathematics*, 26(1), 44--62.
 #'   \doi{10.1007/BF01939361}
@@ -20,8 +20,6 @@
 #' g <- adj::adj(list(c(2L, 3L), c(1L, 3L), c(1L, 2L)))
 #' trees <- enumerate_spanning_trees(g)
 #' length(trees)
-#'
-#' @export
 enumerate_spanning_trees <- function(graph) {
   if (!adj::is_adj(graph)) {
     cli::cli_abort('{.arg graph} must be an {.cls adj} object.')

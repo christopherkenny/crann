@@ -8,9 +8,12 @@ Authors@R:
        email = "ctkenny@proton.me",
        comment = c(ORCID = "0000-0002-9386-6860"))
 Description: Implements spanning tree algorithms for undirected graphs
-    represented as 'adj' adjacency lists. Currently provides enumeration of
-    all spanning trees using the contraction-based algorithm of Winter (1986)
-    <doi:10.1007/BF01939361>.
+    represented as 'adj' adjacency lists. Provides enumeration of all spanning
+    trees via Winter's (1986) contraction-based algorithm
+    <doi:10.1007/BF01939361>, counting via Kirchhoff's matrix tree theorem,
+    minimum spanning trees via Kruskal's algorithm, uniform random sampling via
+    Wilson's (1996) loop-erased random walk <doi:10.1145/237814.237880>, and
+    structural utilities including fundamental cycles and cuts.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -19,3 +22,7 @@ Imports:
     adj,
     cli
 Config/testthat/edition: 3
+Suggests: 
+    spelling,
+    testthat (>= 3.0.0)
+Language: en-US

@@ -9,7 +9,7 @@ test_that('K3 has 3 spanning trees', {
   g <- adj::adj(list(c(2L, 3L), c(1L, 3L), c(1L, 2L)))
   trees <- enumerate_spanning_trees(g)
   expect_length(trees, 3L)
-  expect_true(all(vapply(trees, adj::is_adj, logical(1L))))
+  expect_true(all(vapply(trees, is_spanning_tree, logical(1L))))
 })
 
 test_that('K4 has 16 spanning trees', {
@@ -34,10 +34,8 @@ test_that('spanning trees have correct structure', {
   # K3: each spanning tree has n=3 vertices and n-1=2 edges
   g <- adj::adj(list(c(2L, 3L), c(1L, 3L), c(1L, 2L)))
   trees <- enumerate_spanning_trees(g)
-  for (t in trees) {
-    expect_length(t, 3L)
-    expect_identical(sum(lengths(t)) %/% 2L, 2L)
-  }
+  expect_true(all(lengths(trees) == 3L))
+  expect_true(all(vapply(trees, \(t) sum(lengths(t)) %/% 2L == 2L, logical(1L))))
 })
 
 test_that('spanning trees are distinct', {
