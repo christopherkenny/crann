@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# crann
+# crann <a href="http://christophertkenny.com/crann/"><img src="man/figures/logo.png" align="right" height="138" alt="crann website" /></a>
 
 <!-- badges: start -->
 
