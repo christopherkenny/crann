@@ -1,6 +1,6 @@
 Package: crann
 Title: Spanning Tree Methods for Graphs
-Version: 0.0.0.9000
+Version: 0.0.1
 Authors@R:
     person(given = "Christopher T.",
        family = "Kenny",
@@ -22,7 +22,7 @@ Imports:
     adj,
     cli
 Config/testthat/edition: 3
-Suggests: 
+Suggests:
     spelling,
     testthat (>= 3.0.0)
 Language: en-US

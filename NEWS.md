@@ -1,5 +1,4 @@
-# crann (development version)
-
+# crann 0.0.1
 * `count_spanning_trees()` counts spanning trees via Kirchhoff's matrix tree theorem.
 * `enumerate_spanning_trees()` enumerates all spanning trees of a connected undirected graph using Winter's (1986) contraction-based algorithm.
 * `enumerate_spanning_trees_edges()` enumerates all spanning trees as a compact integer matrix (n-1 rows, 2t columns), avoiding per-tree R memory allocation for a ~9x speedup over `enumerate_spanning_trees()` on dense graphs.
