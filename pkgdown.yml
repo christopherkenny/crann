@@ -2,7 +2,7 @@ pandoc: 3.1.11
 pkgdown: 2.2.0
 pkgdown_sha: ~
 articles: {}
-last_built: 2026-03-06T18:08Z
+last_built: 2026-03-07T02:52Z
 urls:
   reference: http://christophertkenny.com/crann/reference
   article: http://christophertkenny.com/crann/articles

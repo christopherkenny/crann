@@ -1,6 +1,6 @@
 # Changelog
 
-## crann (development version)
+## crann 0.0.1
 
 - [`count_spanning_trees()`](http://christophertkenny.com/crann/reference/count_spanning_trees.md)
   counts spanning trees via Kirchhoff’s matrix tree theorem.
