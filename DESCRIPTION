@@ -22,6 +22,7 @@ Imports:
     adj,
     cli
 Config/testthat/edition: 3
+Config/Needs/website: christopherkenny/ctktemplate
 Suggests:
     spelling,
     testthat (>= 3.0.0)
